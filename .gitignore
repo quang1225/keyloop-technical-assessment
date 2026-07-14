@@ -1,0 +1,26 @@
+.superpowers/
+
+.worktrees/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+.env
+.env.*
+
+# Node / web
+node_modules/
+apps/web/node_modules/
+dist/
+apps/web/dist/
+*.local
+
+# Editor / OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
