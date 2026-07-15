@@ -1,5 +1,7 @@
 # Keyloop Technical Assessment — Unified Service Scheduler
 
+### Demo Video: https://www.youtube.com/watch?v=WOcSglBezaA
+
 ## 1. Overview
 
 This is a submission for **Scenario A: The Unified Service Scheduler** (domain: Ownership) from the Keyloop technical assessment.
