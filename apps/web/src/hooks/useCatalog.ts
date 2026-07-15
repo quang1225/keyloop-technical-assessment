@@ -27,6 +27,12 @@ export type Bay = {
   name: string;
 };
 
+export type Technician = {
+  id: string;
+  full_name: string;
+  skills: string[];
+};
+
 export function useCatalog(advisorId: string) {
   const vehicles = useQuery({
     queryKey: ["catalog", "vehicles", advisorId],
@@ -43,11 +49,18 @@ export function useCatalog(advisorId: string) {
     queryFn: () => apiGet<Bay[]>("/catalog/bays", advisorId),
   });
 
+  const technicians = useQuery({
+    queryKey: ["catalog", "technicians", advisorId],
+    queryFn: () => apiGet<Technician[]>("/catalog/technicians", advisorId),
+  });
+
   return {
     vehicles: vehicles.data ?? [],
     serviceTypes: serviceTypes.data ?? [],
     bays: bays.data ?? [],
-    isLoading: vehicles.isLoading || serviceTypes.isLoading || bays.isLoading,
-    isError: vehicles.isError || serviceTypes.isError || bays.isError,
+    technicians: technicians.data ?? [],
+    isLoading:
+      vehicles.isLoading || serviceTypes.isLoading || bays.isLoading || technicians.isLoading,
+    isError: vehicles.isError || serviceTypes.isError || bays.isError || technicians.isError,
   };
 }

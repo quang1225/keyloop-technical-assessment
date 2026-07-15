@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { formatSlotLabel } from "@/lib/slots";
 import { useCreateAppointment } from "@/hooks/useCreateAppointment";
@@ -31,6 +31,14 @@ export function ConfirmDialog({
   const { createAppointment, isPending } = useCreateAppointment(advisorId, date);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && !isPending && !success) onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose, isPending, success]);
 
   async function handleConfirm() {
     setError(null);
@@ -84,8 +92,16 @@ export function ConfirmDialog({
             <h2 className="mt-1 text-lg font-semibold text-[var(--ink)]">Ready to book?</h2>
 
             <dl className="mt-5 flex flex-col gap-3 text-sm">
-              <Row label="Vehicle" value={`${vehicle.make} ${vehicle.model}`} sub={vehicle.customer.full_name} />
-              <Row label="Service" value={serviceType.name} sub={`${serviceType.duration_minutes} minutes`} />
+              <Row
+                label="Vehicle"
+                value={`${vehicle.make} ${vehicle.model}`}
+                sub={vehicle.customer.full_name}
+              />
+              <Row
+                label="Service"
+                value={serviceType.name}
+                sub={`${serviceType.duration_minutes} minutes`}
+              />
               <Row label="Time" value={formatSlotLabel(start)} sub={date} />
               <Row label="Bay" value={bay?.name ?? "To be assigned"} />
             </dl>

@@ -72,6 +72,53 @@ async def test_double_book_same_slot_returns_409(seeded_db):
 
 
 @pytest.mark.asyncio
+async def test_cancel_appointment_frees_slot(seeded_db):
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        headers = await _demo_headers(client)
+        vehicles = (await client.get("/catalog/vehicles", headers=headers)).json()
+        services = (await client.get("/catalog/service-types", headers=headers)).json()
+        oil = next(s for s in services if s["name"] == "Oil Change")
+        vehicle_id = vehicles[0]["id"]
+
+        avail = await client.get(
+            "/availability",
+            params={"vehicle_id": vehicle_id, "service_type_id": oil["id"], "date": "2026-07-15"},
+            headers=headers,
+        )
+        slot = avail.json()["slots"][0]
+        created = await client.post(
+            "/appointments",
+            headers=headers,
+            json={"vehicle_id": vehicle_id, "service_type_id": oil["id"], "start": slot, "bay_id": None},
+        )
+        assert created.status_code == 201
+        appointment_id = created.json()["id"]
+        booked_bay = created.json()["bay_id"]
+
+        cancelled = await client.post(f"/appointments/{appointment_id}/cancel", headers=headers)
+        assert cancelled.status_code == 200
+        assert cancelled.json()["status"] == "cancelled"
+
+        schedule = await client.get("/schedule", params={"date": "2026-07-15"}, headers=headers)
+        assert schedule.status_code == 200
+        assert all(item["id"] != appointment_id for item in schedule.json())
+
+        # Same bay + start can be rebooked after cancel.
+        rebook = await client.post(
+            "/appointments",
+            headers=headers,
+            json={
+                "vehicle_id": vehicle_id,
+                "service_type_id": oil["id"],
+                "start": slot,
+                "bay_id": booked_bay,
+            },
+        )
+        assert rebook.status_code == 201
+
+
+@pytest.mark.asyncio
 async def test_demo_login_requires_no_auth():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:

@@ -13,7 +13,7 @@ def _resolve_test_database_url() -> str:
     environment once, at import time.
     """
     base = os.environ.get(
-        "DATABASE_URL", "postgresql+asyncpg://scheduler:scheduler@localhost:5433/scheduler"
+        "DATABASE_URL", "postgresql+asyncpg://scheduler:scheduler@localhost:5432/scheduler"
     )
     scheme, _, rest = base.partition("://")
     prefix, _, db_name = rest.rpartition("/")

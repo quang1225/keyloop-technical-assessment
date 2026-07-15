@@ -10,7 +10,7 @@ from app.db import get_session as get_db
 from app.deps import require_advisor
 from app.models.entities import Appointment
 from app.schemas import ScheduleItemOut
-from app.services.loaders import day_bounds, dealership_tz, default_dealership_id
+from app.services.loaders import CANCELLED_STATUS, day_bounds, dealership_tz, default_dealership_id
 
 router = APIRouter(prefix="/schedule", tags=["schedule"])
 
@@ -27,6 +27,7 @@ async def get_schedule(
         select(Appointment)
         .where(
             Appointment.dealership_id == dealership_id,
+            Appointment.status != CANCELLED_STATUS,
             Appointment.starts_at < day_end,
             Appointment.ends_at > day_start,
         )

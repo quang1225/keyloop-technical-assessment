@@ -1,7 +1,7 @@
 from __future__ import annotations
 import uuid
 from datetime import datetime
-from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, text
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base
@@ -55,7 +55,16 @@ class Technician(Base):
 
 class Appointment(Base):
     __tablename__ = "appointments"
-    __table_args__ = (UniqueConstraint("bay_id", "starts_at", name="uq_bay_start"),)
+    # Active bookings only — cancelled rows no longer block the bay/start slot.
+    __table_args__ = (
+        Index(
+            "uq_bay_start_active",
+            "bay_id",
+            "starts_at",
+            unique=True,
+            postgresql_where=text("status <> 'cancelled'"),
+        ),
+    )
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
     dealership_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("dealerships.id"), nullable=False)
     customer_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("customers.id"), nullable=False)

@@ -11,7 +11,7 @@ from app.deps import require_advisor
 from app.domain.booking import BookingConflictError, BookingRequest, BookingValidationError, plan_booking
 from app.models.entities import Appointment, Vehicle
 from app.schemas import AppointmentCreate, AppointmentOut
-from app.services.loaders import build_availability_query, dealership_tz, demo_now
+from app.services.loaders import CANCELLED_STATUS, build_availability_query, dealership_tz, demo_now
 
 router = APIRouter(prefix="/appointments", tags=["appointments"])
 
@@ -81,5 +81,24 @@ async def create_appointment(
         await session.rollback()
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Slot was just booked") from exc
 
+    await session.refresh(appointment)
+    return appointment
+
+
+@router.post("/{appointment_id}/cancel", response_model=AppointmentOut)
+async def cancel_appointment(
+    appointment_id: UUID,
+    advisor_id: str = Depends(require_advisor),
+    session: AsyncSession = Depends(get_db),
+) -> Appointment:
+    _ = advisor_id
+    appointment = await session.get(Appointment, appointment_id)
+    if appointment is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Appointment not found")
+    if appointment.status == CANCELLED_STATUS:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Appointment already cancelled")
+
+    appointment.status = CANCELLED_STATUS
+    await session.commit()
     await session.refresh(appointment)
     return appointment
